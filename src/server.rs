@@ -4,6 +4,7 @@ use futures::StreamExt;
 use futures_util::stream::{SplitSink, SplitStream};
 use log::{debug, error};
 use serde_derive::Deserialize;
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
@@ -113,6 +114,12 @@ async fn handle_connection(stream: TcpStream) -> Result<(), anyhow::Error> {
     if let Ok(home) = std::env::var("HOME") {
         cmd.current_dir(home);
     }
+
+    let mut envs = HashMap::new();
+    envs.insert("COLORTERM", "truecolor");
+    envs.insert("TERM", "xterm-256color");
+
+    cmd.envs(&envs);
 
     let mut pty_cmd = PtyCommand::from(cmd);
     let (stop_sender, stop_receiver) = unbounded_channel();
