@@ -12,6 +12,10 @@ use tokio::io::unix::AsyncFd;
 use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt, Error, ReadBuf};
 use tokio::sync::mpsc;
 
+mod server;
+
+pub use server::start_server;
+
 pub struct PtyMaster {
     inner: Arc<AsyncFd<File>>,
     closed: Arc<AtomicBool>,

@@ -12,15 +12,7 @@ use tokio::process::Command;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio_tungstenite::{accept_async, WebSocketStream};
 use tungstenite::Message;
-use wspty::{PtyCommand, PtyMaster};
-
-#[tokio::main]
-async fn main() {
-    env_logger::init();
-    let _ = ws_server()
-        .await
-        .map_err(|e| debug!("ws server exit with error: {:?}", e));
-}
+use crate::{PtyCommand, PtyMaster};
 
 #[derive(Deserialize, Debug)]
 struct WindowSize {
@@ -137,7 +129,7 @@ async fn handle_connection(stream: TcpStream) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-async fn ws_server() -> Result<(), anyhow::Error> {
+pub async fn start_server() -> Result<(), anyhow::Error> {
     let addr: SocketAddr = "127.0.0.1:7703".parse().unwrap();
     match TcpListener::bind(addr).await {
         Ok(listener) => {
