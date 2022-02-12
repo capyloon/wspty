@@ -67,6 +67,28 @@ impl PtyMaster {
         })
     }
 
+    #[cfg(target_os = "macos")]
+    pub fn open_sync_pty_slave(&mut self) -> Result<File, std::io::Error> {
+        let fd = self.as_raw_fd();
+        let buf = unsafe { libc::ptsname(fd) };
+        if buf.is_null() {
+            return Err(std::io::Error::last_os_error());
+        }
+        let ptsname = OsStr::from_bytes(unsafe { CStr::from_ptr(buf as _) }.to_bytes());
+        match std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(ptsname)
+        {
+            Ok(slave) => {
+                self.slave.replace(slave.try_clone().unwrap());
+                Ok(slave)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    #[cfg(not(target_os = "macos"))]
     pub fn open_sync_pty_slave(&mut self) -> Result<File, std::io::Error> {
         let mut buf: [libc::c_char; 512] = [0; 512];
         let fd = self.as_raw_fd();
@@ -253,7 +275,7 @@ impl PtyCommand {
                     return Err(std::io::Error::last_os_error());
                 }
 
-                if libc::ioctl(0, libc::TIOCSCTTY, 1) != 0 {
+                if libc::ioctl(0, libc::TIOCSCTTY as _, 1) != 0 {
                     return Err(std::io::Error::last_os_error());
                 }
                 Ok(())
